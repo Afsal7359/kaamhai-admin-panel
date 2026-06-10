@@ -8,6 +8,8 @@ import {
   updateDocument,
 } from "../api/endpoints";
 import { resourceFor } from "../resources";
+import { useAuth } from "../context/AuthContext";
+import AccessDenied from "./AccessDenied";
 import Badge from "./Badge";
 import DataTable from "./DataTable";
 import DocView, { isRefObject, RefChip } from "./DocView";
@@ -58,6 +60,7 @@ export default function ResourcePage() {
   const { model } = useParams();
   const toast = useToast();
   const config = resourceFor(model);
+  const { can } = useAuth();
 
   const [rows, setRows] = useState([]);
   const [schemaFields, setSchemaFields] = useState(null);
@@ -144,10 +147,14 @@ export default function ResourcePage() {
       render: (r) => (
         <div className="row-actions" onClick={(e) => e.stopPropagation()}>
           <button className="btn sm" onClick={() => setViewing(r)}>View</button>
-          <button className="btn sm" onClick={() => openEdit(r)}>Edit</button>
-          <button className="btn sm ghost-danger" onClick={() => { setDeleting(r); setHardDelete(false); }}>
-            Delete
-          </button>
+          {can(model, "edit") && (
+            <button className="btn sm" onClick={() => openEdit(r)}>Edit</button>
+          )}
+          {can(model, "delete") && (
+            <button className="btn sm ghost-danger" onClick={() => { setDeleting(r); setHardDelete(false); }}>
+              Delete
+            </button>
+          )}
         </div>
       ),
     },
@@ -207,6 +214,8 @@ export default function ResourcePage() {
 
   const title = config?.label || model;
 
+  if (!can(model, "view")) return <AccessDenied />;
+
   return (
     <div>
       <div className="filters-bar">
@@ -218,7 +227,9 @@ export default function ResourcePage() {
           onKeyDown={(e) => e.key === "Enter" && load(1)}
         />
         <button className="btn primary" onClick={() => load(1)}>Search</button>
-        <button className="btn" onClick={openCreate}>+ Add new</button>
+        {can(model, "create") && (
+          <button className="btn" onClick={openCreate}>+ Add new</button>
+        )}
       </div>
 
       <div className="panel">
@@ -234,15 +245,17 @@ export default function ResourcePage() {
           footer={
             <>
               <button className="btn" onClick={() => setViewing(null)}>Close</button>
-              <button
-                className="btn primary"
-                onClick={() => {
-                  openEdit(viewing);
-                  setViewing(null);
-                }}
-              >
-                Edit
-              </button>
+              {can(model, "edit") && (
+                <button
+                  className="btn primary"
+                  onClick={() => {
+                    openEdit(viewing);
+                    setViewing(null);
+                  }}
+                >
+                  Edit
+                </button>
+              )}
             </>
           }
         >

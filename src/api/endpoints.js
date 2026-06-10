@@ -4,6 +4,13 @@ import client from "./client";
 export const adminLogin = (phoneNumber, password) =>
   client.post("/admin/login", { phoneNumber, password });
 
+// ── Access manager (RBAC) ────────────────────────────────────────────────────
+export const getAccessMe = () => client.get("/admin/access/me");
+export const getAdminAccounts = () => client.get("/admin/access/admins");
+export const createAdminAccount = (payload) => client.post("/admin/access/admins", payload);
+export const updateAdminAccount = (id, payload) => client.patch(`/admin/access/admins/${id}`, payload);
+export const deleteAdminAccount = (id) => client.delete(`/admin/access/admins/${id}`);
+
 // ── Dashboard ────────────────────────────────────────────────────────────────
 export const getAnalytics = (params) => client.get("/admin/UserAnalytics", { params });
 

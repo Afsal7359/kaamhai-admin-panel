@@ -1,38 +1,50 @@
 import { useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { GROUPS, resourceFor } from "../resources";
+import { GROUPS, resourceFor, resourceKey } from "../resources";
 import ErrorBoundary from "./ErrorBoundary";
 import Icon from "./Icon";
 
 const itemPath = (it) => (it.page ? it.page : `/r/${it.model}`);
 
 export default function Layout() {
-  const { admin, logout } = useAuth();
+  const { admin, logout, can, isSuperAdmin } = useAuth();
   const { pathname } = useLocation();
   const [query, setQuery] = useState("");
 
+  // Only show pages this admin can view.
+  const allowedGroups = useMemo(
+    () =>
+      GROUPS.map((g) => ({
+        ...g,
+        items: g.items.filter((it) =>
+          it.superOnly ? isSuperAdmin : can(resourceKey(it), "view"),
+        ),
+      })).filter((g) => g.items.length > 0),
+    [can, isSuperAdmin],
+  );
+
   const activeGroup = useMemo(() => {
-    for (const g of GROUPS) {
+    for (const g of allowedGroups) {
       if (g.items.some((it) => itemPath(it) === pathname)) return g.group;
     }
     return "Overview";
-  }, [pathname]);
+  }, [pathname, allowedGroups]);
 
   const [open, setOpen] = useState({});
   const isOpen = (g) => open[g] ?? (g === activeGroup || g === "Overview");
 
   const filtering = query.trim().length > 0;
   const visibleGroups = useMemo(() => {
-    if (!filtering) return GROUPS;
+    if (!filtering) return allowedGroups;
     const q = query.trim().toLowerCase();
-    return GROUPS.map((g) => ({
+    return allowedGroups.map((g) => ({
       ...g,
       items: g.items.filter(
         (it) => it.label.toLowerCase().includes(q) || (it.model || "").toLowerCase().includes(q),
       ),
     })).filter((g) => g.items.length > 0);
-  }, [filtering, query]);
+  }, [filtering, query, allowedGroups]);
 
   const title = useMemo(() => {
     if (pathname.startsWith("/r/")) {

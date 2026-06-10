@@ -150,6 +150,7 @@ export const GROUPS = [
     items: [
       { page: "/api-logs", label: "API Logs", icon: "🧾" },
       { model: "apiLogs", label: "API Logs (full data)", fields: ["name", "statusCode", "route", "method", "createdAt"] },
+      { page: "/access", label: "Access Manager", superOnly: true },
     ],
   },
 ];
@@ -163,3 +164,8 @@ for (const g of GROUPS) {
 }
 
 export const resourceFor = (model) => RESOURCES[model] || null;
+
+// Permission resource key for a sidebar item — page path key or model name.
+// Must match the keys the backend routes are gated with (see adminRoute.js).
+export const resourceKey = (item) =>
+  item.model ? item.model : item.page === "/" ? "dashboard" : item.page.slice(1);

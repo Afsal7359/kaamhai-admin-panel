@@ -14,6 +14,7 @@ import Modal from "../components/Modal";
 import Pagination from "../components/Pagination";
 import StatCard from "../components/StatCard";
 import { useToast } from "../components/Toast";
+import { useAuth } from "../context/AuthContext";
 
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString("en-IN") : "—");
 const fmtDateTime = (d) => (d ? new Date(d).toLocaleString("en-IN") : "—");
@@ -157,6 +158,8 @@ const USER_PILLS = [
 
 function EmployeeVerifications() {
   const toast = useToast();
+  const { can } = useAuth();
+  const canEdit = can("verifications", "edit");
   const [rows, setRows] = useState([]);
   const [counts, setCounts] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -249,7 +252,7 @@ function EmployeeVerifications() {
       label: "",
       render: (r) => (
         <button className="btn sm primary" onClick={(e) => { e.stopPropagation(); setSelected(r); }}>
-          Review
+          {canEdit ? "Review" : "View"}
         </button>
       ),
     },
@@ -300,7 +303,7 @@ function EmployeeVerifications() {
           footer={
             <>
               <button className="btn" onClick={() => setSelected(null)}>Close</button>
-              {!selectedVerified && (
+              {!selectedVerified && canEdit && (
                 <>
                   <button className="btn ghost-danger" disabled={busy} onClick={() => setRejecting(selected)}>
                     Reject
@@ -434,6 +437,8 @@ const OWNER_PILLS = [
 
 function EmployerVerifications() {
   const toast = useToast();
+  const { can } = useAuth();
+  const canEdit = can("verifications", "edit");
   const [rows, setRows] = useState([]);
   const [counts, setCounts] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -548,7 +553,7 @@ function EmployerVerifications() {
             </div>
             <div className="row-actions">
               <Badge value={d.isLinked ? "approved" : "pending"} />
-              {d.isLinked ? (
+              {!canEdit ? null : d.isLinked ? (
                 <button className="btn sm ghost-danger" disabled={busy} onClick={() => reviewDoc("gst", d._id, "reject")}>
                   Revoke
                 </button>
@@ -568,7 +573,7 @@ function EmployerVerifications() {
             </div>
             <div className="row-actions">
               <Badge value={d.isLinked ? "approved" : "pending"} />
-              {d.isLinked ? (
+              {!canEdit ? null : d.isLinked ? (
                 <button className="btn sm ghost-danger" disabled={busy} onClick={() => reviewDoc("fssai", d._id, "reject")}>
                   Revoke
                 </button>
@@ -597,12 +602,12 @@ function EmployerVerifications() {
             </div>
             <div className="row-actions">
               <Badge value={d.verificationStatus || "pending"} />
-              {d.verificationStatus !== "approved" && (
+              {canEdit && d.verificationStatus !== "approved" && (
                 <button className="btn sm primary" disabled={busy} onClick={() => reviewDoc("other", d._id, "approve")}>
                   Approve
                 </button>
               )}
-              {d.verificationStatus !== "rejected" && (
+              {canEdit && d.verificationStatus !== "rejected" && (
                 <button className="btn sm ghost-danger" disabled={busy} onClick={() => reviewDoc("other", d._id, "reject")}>
                   Reject
                 </button>
@@ -655,6 +660,7 @@ function EmployerVerifications() {
           footer={
             <>
               <button className="btn" onClick={() => setSelected(null)}>Close</button>
+              {canEdit && (
               <button
                 className={`btn ${selected.isVerified ? "ghost-danger" : "primary"}`}
                 disabled={busy}
@@ -662,6 +668,7 @@ function EmployerVerifications() {
               >
                 {busy ? "Working…" : selected.isVerified ? "Remove verified status" : "Mark employer verified ✓"}
               </button>
+              )}
             </>
           }
         >

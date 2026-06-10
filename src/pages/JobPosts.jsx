@@ -11,11 +11,13 @@ import DataTable from "../components/DataTable";
 import Modal from "../components/Modal";
 import Pagination from "../components/Pagination";
 import { useToast } from "../components/Toast";
+import { useAuth } from "../context/AuthContext";
 
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString("en-IN") : "—");
 
 export default function JobPosts() {
   const toast = useToast();
+  const { can } = useAuth();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -140,18 +142,22 @@ export default function JobPosts() {
       label: "",
       render: (r) => (
         <div className="row-actions" onClick={(e) => e.stopPropagation()}>
-          <button className="btn sm" onClick={() => startEdit(r)}>Edit</button>
-          <button className="btn sm" disabled={busy} onClick={() => doToggleCalls(r)}>
-            {r.enableCallsfromB2c ? "Disable calls" : "Enable calls"}
-          </button>
-          {!r.paymentDone && (
+          {can("job-posts", "edit") && (
+            <>
+              <button className="btn sm" onClick={() => startEdit(r)}>Edit</button>
+              <button className="btn sm" disabled={busy} onClick={() => doToggleCalls(r)}>
+                {r.enableCallsfromB2c ? "Disable calls" : "Enable calls"}
+              </button>
+              <button className="btn sm" disabled={busy} onClick={() => doBumpDate(r)}>
+                Bump date
+              </button>
+            </>
+          )}
+          {!r.paymentDone && can("payments", "create") && (
             <button className="btn sm" disabled={busy} onClick={() => doPaymentLink(r)}>
               Pay link
             </button>
           )}
-          <button className="btn sm" disabled={busy} onClick={() => doBumpDate(r)}>
-            Bump date
-          </button>
         </div>
       ),
     },

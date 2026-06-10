@@ -5,11 +5,13 @@ import DataTable from "../components/DataTable";
 import Modal from "../components/Modal";
 import Pagination from "../components/Pagination";
 import { useToast } from "../components/Toast";
+import { useAuth } from "../context/AuthContext";
 
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString("en-IN") : "—");
 
 export default function Employees() {
   const toast = useToast();
+  const { can } = useAuth();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -111,9 +113,11 @@ export default function Employees() {
           <button className="btn sm" onClick={() => setSelected(r)}>
             View
           </button>
-          <button className="btn sm" onClick={() => startEdit(r)}>
-            Edit
-          </button>
+          {can("employees", "edit") && (
+            <button className="btn sm" onClick={() => startEdit(r)}>
+              Edit
+            </button>
+          )}
         </div>
       ),
     },
@@ -156,7 +160,9 @@ export default function Employees() {
           footer={
             <>
               <button className="btn" onClick={() => setSelected(null)}>Close</button>
-              <button className="btn primary" onClick={() => { startEdit(selected); }}>Edit details</button>
+              {can("employees", "edit") && (
+                <button className="btn primary" onClick={() => { startEdit(selected); }}>Edit details</button>
+              )}
             </>
           }
         >

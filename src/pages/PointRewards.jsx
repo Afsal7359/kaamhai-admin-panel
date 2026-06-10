@@ -4,9 +4,11 @@ import Badge from "../components/Badge";
 import DataTable from "../components/DataTable";
 import Modal from "../components/Modal";
 import { useToast } from "../components/Toast";
+import { useAuth } from "../context/AuthContext";
 
 export default function PointRewards() {
   const toast = useToast();
+  const { can } = useAuth();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
@@ -60,7 +62,7 @@ export default function PointRewards() {
     {
       key: "actions",
       label: "",
-      render: (r) => (
+      render: (r) => can("point-rewards", "edit") && (
         <button
           className="btn sm"
           onClick={() =>
@@ -82,12 +84,14 @@ export default function PointRewards() {
   return (
     <div>
       <div className="filters-bar">
-        <button
-          className="btn primary"
-          onClick={() => setEditing({ key: "", amount: "", description: "", isActive: true })}
-        >
-          + New reward
-        </button>
+        {can("point-rewards", "edit") && (
+          <button
+            className="btn primary"
+            onClick={() => setEditing({ key: "", amount: "", description: "", isActive: true })}
+          >
+            + New reward
+          </button>
+        )}
       </div>
       <div className="panel">
         <DataTable columns={columns} rows={rows} loading={loading} rowKey={(r) => r._id || r.key} />
