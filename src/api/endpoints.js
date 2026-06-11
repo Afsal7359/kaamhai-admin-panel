@@ -65,6 +65,17 @@ export const rejectEmployerDocument = (id, remarks) =>
 export const getPointRewards = () => client.get("/admin/point-rewards");
 export const upsertPointReward = (payload) => client.post("/admin/point-rewards", payload);
 
+// ── Coupons ──────────────────────────────────────────────────────────────────
+export const getCoupons = (params) => client.get("/admin/coupons", { params });
+export const getCouponDetail = (id) => client.get(`/admin/coupons/${id}`);
+export const createCoupon = (payload) => client.post("/admin/coupons", payload);
+export const updateCoupon = (id, payload) => client.patch(`/admin/coupons/${id}`, payload);
+export const deleteCoupon = (id) => client.delete(`/admin/coupons/${id}`);
+export const getCouponRedemptions = (id, params) =>
+  client.get(`/admin/coupons/${id}/redemptions`, { params });
+export const searchCouponUsers = (params) => client.get("/admin/coupon-helpers/users", { params });
+export const getCouponAssociations = () => client.get("/admin/coupon-helpers/associations");
+
 // ── API logs ─────────────────────────────────────────────────────────────────
 export const getApiLogs = (params) => client.get("/admin/apiLogs", { params });
 

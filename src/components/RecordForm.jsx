@@ -56,17 +56,15 @@ export const buildInitial = (fields, doc = {}) => {
   return values;
 };
 
-// Form values → API payload.
-//  mode "edit":   dotted keys ($set-safe — never replaces whole sub-objects),
-//                 only fields changed vs `initial`.
-//  mode "create": nested object for the mongoose constructor; empty fields omitted.
+// Form values → API payload. Always a NESTED object — never dotted keys,
+// because the backend's express-mongo-sanitize strips any key containing "."
+// from request bodies. On edit the backend flattens nested objects back into
+// dot-path $set entries, so sibling fields are never overwritten.
+//  mode "edit":   only fields changed vs `initial`.
+//  mode "create": empty fields omitted so schema defaults apply.
 export const toPayload = (fields, values, { mode, initial } = {}) => {
   const out = {};
   const setNested = (path, val) => {
-    if (mode === "edit") {
-      out[path] = val;
-      return;
-    }
     const keys = path.split(".");
     let o = out;
     keys.slice(0, -1).forEach((k) => {

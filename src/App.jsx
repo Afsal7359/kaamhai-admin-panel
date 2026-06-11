@@ -11,6 +11,8 @@ import OfferLetters from "./pages/OfferLetters";
 import Verifications from "./pages/Verifications";
 import Payments from "./pages/Payments";
 import PointRewards from "./pages/PointRewards";
+import Coupons from "./pages/Coupons";
+import SupportNumbers from "./pages/SupportNumbers";
 import ApiLogs from "./pages/ApiLogs";
 import AccessManager from "./pages/AccessManager";
 import AccessDenied from "./components/AccessDenied";
@@ -54,6 +56,8 @@ export default function App() {
         <Route path="verifications" element={<Guard resource="verifications"><Verifications /></Guard>} />
         <Route path="payments" element={<Guard resource="payments"><Payments /></Guard>} />
         <Route path="point-rewards" element={<Guard resource="point-rewards"><PointRewards /></Guard>} />
+        <Route path="coupons" element={<Guard resource="coupons"><Coupons /></Guard>} />
+        <Route path="support-numbers" element={<Guard resource="supportConfig"><SupportNumbers /></Guard>} />
         <Route path="api-logs" element={<Guard resource="api-logs"><ApiLogs /></Guard>} />
         <Route path="access" element={<SuperGuard><AccessManager /></SuperGuard>} />
         {/* Every database collection, in its own place — see src/resources.js */}

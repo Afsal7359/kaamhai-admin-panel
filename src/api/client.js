@@ -13,6 +13,16 @@ export const PROFILE_KEY = "kh_admin_profile";
 
 const client = axios.create({ baseURL: API_URL });
 
+// Build a previewable URL for stored file values. Full URLs pass through;
+// bare GCS file names go via the backend's signed-URL redirect (the admin
+// JWT travels as a query param because <img> tags can't send headers).
+export const fileUrl = (value) => {
+  if (!value || typeof value !== "string") return null;
+  if (/^https?:\/\//i.test(value)) return value;
+  const token = localStorage.getItem(TOKEN_KEY) || "";
+  return `${API_URL}/admin/file?name=${encodeURIComponent(value)}&token=${encodeURIComponent(token)}`;
+};
+
 // HMAC-SHA256 via Web Crypto — mirrors appbackend/middlewares/signatureCheck.js
 async function hmacSha256Hex(secret, message) {
   const enc = new TextEncoder();

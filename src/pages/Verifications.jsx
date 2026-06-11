@@ -7,7 +7,7 @@ import {
   reviewBusinessDocument,
   setEmployerVerified,
 } from "../api/endpoints";
-import { API_URL } from "../api/client";
+import { fileUrl } from "../api/client";
 import Badge from "../components/Badge";
 import DataTable from "../components/DataTable";
 import Modal from "../components/Modal";
@@ -18,7 +18,7 @@ import { useAuth } from "../context/AuthContext";
 
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString("en-IN") : "—");
 const fmtDateTime = (d) => (d ? new Date(d).toLocaleString("en-IN") : "—");
-const imgSrc = (p) => (!p ? null : p.startsWith("http") ? p : `${API_URL}/${p}`);
+const imgSrc = (p) => fileUrl(p);
 
 function DocThumb({ src, label }) {
   const url = imgSrc(src);

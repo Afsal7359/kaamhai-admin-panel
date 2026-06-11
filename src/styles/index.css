@@ -1698,3 +1698,43 @@ table.data tr:hover td {
   accent-color: var(--primary);
   cursor: pointer;
 }
+
+/* ── SmartMedia: image preview with link fallback ───────────── */
+.dv-media {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-decoration: none;
+}
+
+.dv-media img {
+  max-width: 150px;
+  max-height: 110px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  cursor: zoom-in;
+  display: block;
+  object-fit: cover;
+  background: #f2f4f7;
+}
+
+.dv-media.lg img {
+  width: 100%;
+  max-width: 100%;
+  height: 96px;
+  max-height: 96px;
+}
+
+.dv-media-link {
+  font-size: 10.5px;
+  color: var(--text-soft);
+  word-break: break-all;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dv-media:hover .dv-media-link {
+  color: var(--primary);
+}

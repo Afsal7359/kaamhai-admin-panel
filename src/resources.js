@@ -13,10 +13,8 @@ export const GROUPS = [
     group: "People",
     icon: "users",
     items: [
-      { page: "/employees", label: "Employees", icon: "👷" },
-      { page: "/employers", label: "Employers", icon: "🏢" },
-      { model: "user", label: "Employees (full data)", fields: ["phoneNumber", "basicDetails.name", "basicDetails.city", "isEmployeeVerified", "isDeleted", "createdAt"] },
-      { model: "businessOwner", label: "Employers (full data)", fields: ["name", "phoneNumber", "currentCity", "walletBalance", "isVerified", "isDeleted"] },
+      { model: "user", label: "Employees", fields: ["phoneNumber", "basicDetails.name", "basicDetails.city", "isEmployeeVerified", "isDeleted", "createdAt"] },
+      { model: "businessOwner", label: "Employers", fields: ["name", "phoneNumber", "currentCity", "walletBalance", "isVerified", "isDeleted"] },
       { model: "admin", label: "Admin Accounts", fields: ["name", "phoneNumber"] },
       { model: "Aadhar", label: "Aadhaar Records", fields: ["name", "gender", "dateOfBirth", "aadharId", "isDeleted", "createdAt"] },
       { model: "pancard", label: "PAN Cards", fields: ["name", "panId", "gender", "dateOfBirth", "createdAt"] },
@@ -45,12 +43,10 @@ export const GROUPS = [
     group: "Hiring",
     icon: "briefcase",
     items: [
-      { page: "/job-posts", label: "Job Posts", icon: "📋" },
-      { model: "jobPostManager", label: "Job Posts (full data)", fields: ["jobTitle", "status", "paymentDone", "jobType", "isDeleted", "createdAt"] },
+      { model: "jobPostManager", label: "Job Posts", fields: ["jobTitle", "status", "paymentDone", "jobType", "isDeleted", "createdAt"] },
       { model: "jobApplicants", label: "Job Applicants", fields: ["jobPostId", "applicants", "isDeleted"] },
       { model: "jobTitle", label: "Job Titles", fields: ["title", "createdAt"] },
-      { page: "/offer-letters", label: "Offer Letters", icon: "✉️" },
-      { model: "offerLetter", label: "Offer Letters (full data)", fields: ["jobTitle", "salary", "status.employee", "status.employer", "startDate", "createdAt"] },
+      { model: "offerLetter", label: "Offer Letters", fields: ["jobTitle", "salary", "status.employee", "status.employer", "startDate", "createdAt"] },
       { model: "BranchLinkRequest", label: "Branch Link Requests", fields: ["employeeId", "branchId", "status", "employeeType", "agreedSalary", "startDate"] },
     ],
   },
@@ -97,9 +93,9 @@ export const GROUPS = [
       { model: "jobSearchUnlockPayment", label: "Job Unlock Payments", fields: ["transactionId", "amount", "userId", "totalCost", "createdAt"] },
       { model: "EmployerSubscription", label: "Subscriptions", fields: ["ownerId", "planCode", "planName", "status", "startDate", "endDate"] },
       { model: "platformPrice", label: "Platform Prices", fields: ["jobPostFee", "hiringFee", "gst", "jobSearchUnlockedPrice"] },
-      { model: "coupon", label: "Coupons", fields: ["code", "type", "value", "usageLimit", "usedCount", "isActive", "expiresAt"] },
       { model: "walletTransaction", label: "Wallet Transactions", fields: ["userId", "userType", "eventKey", "amount", "balanceAfter", "status"] },
       { page: "/point-rewards", label: "Point Rewards", icon: "🎁" },
+      { page: "/coupons", label: "Coupons", icon: "🏷️" },
       { page: "/payments", label: "Payment Tools", icon: "💳" },
     ],
   },
@@ -111,7 +107,7 @@ export const GROUPS = [
       { model: "review", label: "Reviews", fields: ["employeeId", "userId", "companyId", "createdAt"] },
       { model: "reviewQuestions", label: "Review Questions", fields: ["question", "type"] },
       { model: "support", label: "Support Tickets", fields: ["subject", "type.name", "userId", "message"] },
-      { model: "supportConfig", label: "Support Config", fields: ["employeeSupportWhatsapp", "employeeSupportEmail", "employerSupportWhatsapp", "employerSupportEmail"] },
+      { page: "/support-numbers", label: "Support Numbers", resource: "supportConfig" },
       { model: "Notification", label: "Notifications", fields: ["userModel", "type", "title", "isRead", "createdAt"] },
     ],
   },
@@ -148,8 +144,7 @@ export const GROUPS = [
     group: "System",
     icon: "terminal",
     items: [
-      { page: "/api-logs", label: "API Logs", icon: "🧾" },
-      { model: "apiLogs", label: "API Logs (full data)", fields: ["name", "statusCode", "route", "method", "createdAt"] },
+      { model: "apiLogs", label: "API Logs", fields: ["name", "statusCode", "route", "method", "createdAt"] },
       { page: "/access", label: "Access Manager", superOnly: true },
     ],
   },
@@ -167,5 +162,6 @@ export const resourceFor = (model) => RESOURCES[model] || null;
 
 // Permission resource key for a sidebar item — page path key or model name.
 // Must match the keys the backend routes are gated with (see adminRoute.js).
+// `resource` overrides for curated pages that manage a specific collection.
 export const resourceKey = (item) =>
-  item.model ? item.model : item.page === "/" ? "dashboard" : item.page.slice(1);
+  item.resource || (item.model ? item.model : item.page === "/" ? "dashboard" : item.page.slice(1));

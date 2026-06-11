@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { API_URL } from "../api/client";
+import { fileUrl } from "../api/client";
 import Badge from "./Badge";
 
 // ── Shared helpers for populated reference fields ───────────────────────────
@@ -53,13 +53,39 @@ export const refSecondary = (v) => {
 
 const isIsoDate = (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v);
 
-const IMG_KEY = /image|photo|selfie|logo|docfront|docback|filename|fileurl|damagephoto|shareimg|icon$/i;
-const IMG_EXT = /\.(png|jpe?g|webp|gif|svg)(\?|$)/i;
+const IMG_KEY =
+  /image|photo|selfie|logo|docfront|docback|filename|fileurl|damagephoto|shareimg|qrcode|document$|^doc$|icon$/i;
+const IMG_EXT = /\.(png|jpe?g|webp|gif|svg|bmp|heic)(\?|$)/i;
+
+const isUrl = (v) => typeof v === "string" && /^https?:\/\//i.test(v);
 
 const looksLikeImage = (key, v) =>
-  typeof v === "string" && v.length > 3 && (IMG_EXT.test(v) || (IMG_KEY.test(key) && !v.includes(" ")));
+  typeof v === "string" && v.length > 3 && !v.includes(" ") &&
+  (IMG_EXT.test(v) || IMG_KEY.test(key));
 
-const imgUrl = (v) => (v.startsWith("http") ? v : `${API_URL}/${v}`);
+const imgUrl = (v) => fileUrl(v);
+
+const shortUrl = (v) => (v.length > 56 ? `${v.slice(0, 56)}…` : v);
+
+// Tries to render the value as an image preview; if it doesn't load as an
+// image (e.g. a payment link or PDF), falls back to a plain clickable link.
+export function SmartMedia({ src, alt, large }) {
+  const [failed, setFailed] = useState(false);
+  const url = imgUrl(src);
+  if (failed) {
+    return (
+      <a href={url} target="_blank" rel="noreferrer">
+        {shortUrl(src)}
+      </a>
+    );
+  }
+  return (
+    <a className={`dv-media${large ? " lg" : ""}`} href={url} target="_blank" rel="noreferrer">
+      <img src={url} alt={alt || "preview"} loading="lazy" onError={() => setFailed(true)} />
+      <span className="dv-media-link">{shortUrl(src)}</span>
+    </a>
+  );
+}
 
 const prettyKey = (path) =>
   path
@@ -75,25 +101,9 @@ function Value({ k, v }) {
   if (v == null || v === "") return <span className="dv-muted">—</span>;
   if (typeof v === "boolean") return <Badge value={v ? "true" : "false"} />;
   if (isIsoDate(v)) return <>{new Date(v).toLocaleString("en-IN")}</>;
-  if (looksLikeImage(k, v))
-    return (
-      <img
-        className="dv-img"
-        src={imgUrl(v)}
-        alt={k}
-        onClick={() => window.open(imgUrl(v), "_blank")}
-        onError={(e) => {
-          e.currentTarget.outerHTML = `<span>${v}</span>`;
-        }}
-      />
-    );
+  // Any image-ish field OR any URL gets a live preview with link fallback.
+  if (looksLikeImage(k, v) || isUrl(v)) return <SmartMedia src={v} alt={k} />;
   if (typeof v === "string" && BADGE_RE.test(v)) return <Badge value={v} />;
-  if (typeof v === "string" && v.startsWith("http"))
-    return (
-      <a href={v} target="_blank" rel="noreferrer">
-        {v.length > 60 ? `${v.slice(0, 60)}…` : v}
-      </a>
-    );
   return <>{String(v)}</>;
 }
 
@@ -204,7 +214,7 @@ export default function DocView({ doc }) {
           <div className="doc-row">
             {images.map(([k, v]) => (
               <div className="doc-card" key={k}>
-                <img src={imgUrl(v)} alt={k} onClick={() => window.open(imgUrl(v), "_blank")} />
+                <SmartMedia src={v} alt={k} large />
                 <div className="cap">{prettyKey(k)}</div>
               </div>
             ))}
