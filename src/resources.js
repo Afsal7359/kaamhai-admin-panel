@@ -14,7 +14,7 @@ export const GROUPS = [
     icon: "users",
     items: [
       { model: "user", label: "Employees", fields: ["phoneNumber", "basicDetails.name", "basicDetails.city", "isEmployeeVerified", "isDeleted", "createdAt"] },
-      { model: "businessOwner", label: "Employers", fields: ["name", "phoneNumber", "currentCity", "walletBalance", "isVerified", "isDeleted"] },
+      { model: "businessOwner", label: "Employers", fields: ["name", "phoneNumber", "currentCity", "walletBalance", "isVerified", "createdAt"] },
       { model: "admin", label: "Admin Accounts", fields: ["name", "phoneNumber"] },
       { model: "Aadhar", label: "Aadhaar Records", fields: ["name", "gender", "dateOfBirth", "aadharId", "isDeleted", "createdAt"] },
       { model: "pancard", label: "PAN Cards", fields: ["name", "panId", "gender", "dateOfBirth", "createdAt"] },

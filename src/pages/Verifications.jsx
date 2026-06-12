@@ -5,7 +5,6 @@ import {
   getUserVerifications,
   rejectVerification,
   reviewBusinessDocument,
-  setEmployerVerified,
 } from "../api/endpoints";
 import { fileUrl } from "../api/client";
 import Badge from "../components/Badge";
@@ -384,6 +383,17 @@ const employerDocs = (o) => {
   return { companies, gst, fssai: fssaiDocs, other };
 };
 
+// Fully verified = step 4 complete: at least one approved document, none pending.
+const ownerVerified = (o) => {
+  const { gst, fssai: fssaiDocs, other } = employerDocs(o);
+  const approved =
+    gst.filter((d) => d.isLinked).length +
+    fssaiDocs.filter((d) => d.isLinked).length +
+    other.filter((d) => d.verificationStatus === "approved").length;
+  const pending = other.filter((d) => d.verificationStatus === "pending").length;
+  return approved > 0 && pending === 0;
+};
+
 const computeOwnerSteps = (o) => {
   const { companies, gst, fssai: fssaiDocs, other } = employerDocs(o);
   const profileDone = Boolean(o.name);
@@ -395,7 +405,6 @@ const computeOwnerSteps = (o) => {
     other.filter((d) => d.verificationStatus === "approved").length;
   const pendingOther = other.filter((d) => d.verificationStatus === "pending").length;
   const docsDone = approvedDocs > 0 && pendingOther === 0;
-  const verified = Boolean(o.isVerified);
 
   return [
     { key: "reg", title: "Registration", status: "complete", desc: `${o.phoneNumber} · joined ${fmtDate(o.createdAt)}` },
@@ -413,26 +422,24 @@ const computeOwnerSteps = (o) => {
     },
     {
       key: "docs",
-      title: "Business documents",
+      title: "Business documents — final step",
       status: docsDone ? "complete" : allDocs > 0 ? "current" : companyDone ? "current" : "upcoming",
-      desc:
-        allDocs === 0
+      desc: docsDone
+        ? `Fully verified ✓ · ${approvedDocs}/${allDocs} documents approved`
+        : allDocs === 0
           ? "No documents submitted"
           : `${approvedDocs}/${allDocs} approved${pendingOther ? ` · ${pendingOther} pending review` : ""}`,
-    },
-    {
-      key: "verified",
-      title: "Employer verified",
-      status: verified ? "complete" : docsDone ? "current" : "upcoming",
-      desc: verified ? `Verified on ${fmtDate(o.verifiedAt)}` : "Awaiting final verification",
     },
   ];
 };
 
 const OWNER_PILLS = [
-  { key: "unverified", label: "Not verified" },
-  { key: "verified", label: "Verified" },
-  { key: "", label: "All employers" },
+  { key: "", label: "All employers", count: "total" },
+  { key: "step1", label: "Step 1 · Registered", count: "step1" },
+  { key: "step2", label: "Step 2 · Profile done", count: "step2" },
+  { key: "step3", label: "Step 3 · Company added", count: "step3" },
+  { key: "step4", label: "Step 4 · Docs pending", count: "step4" },
+  { key: "verified", label: "Fully verified", count: "verified" },
 ];
 
 function EmployerVerifications() {
@@ -445,7 +452,7 @@ function EmployerVerifications() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const [stage, setStage] = useState("unverified");
+  const [stage, setStage] = useState("");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -491,19 +498,6 @@ function EmployerVerifications() {
     }
   };
 
-  const toggleVerified = async (o) => {
-    setBusy(true);
-    try {
-      await setEmployerVerified(o._id, !o.isVerified);
-      toast(o.isVerified ? "Employer verification removed" : "Employer marked verified ✓", "success");
-      load(page);
-    } catch (err) {
-      toast(err.response?.data?.message || "Action failed", "error");
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const columns = [
     { key: "name", label: "Employer", render: (r) => r.name || "—" },
     { key: "phone", label: "Phone", render: (r) => r.phoneNumber },
@@ -526,7 +520,7 @@ function EmployerVerifications() {
     {
       key: "state",
       label: "Status",
-      render: (r) => (r.isVerified ? <Badge value="verified" /> : <Badge value="not verified" color="orange" />),
+      render: (r) => (ownerVerified(r) ? <Badge value="verified" /> : <Badge value="not verified" color="orange" />),
     },
     {
       key: "actions",
@@ -623,8 +617,9 @@ function EmployerVerifications() {
     <div>
       {counts && (
         <div className="stat-grid">
-          <StatCard label="Documents pending review" value={counts.pendingDocuments} sub="needs your action" />
-          <StatCard label="Verified employers" value={counts.verified?.toLocaleString()} />
+          <StatCard label="Docs pending review (step 4)" value={counts.step4?.toLocaleString()} sub="needs your action" />
+          <StatCard label="Fully verified" value={counts.verified?.toLocaleString()} sub="all 4 steps complete" />
+          <StatCard label="Company added (step 3)" value={counts.step3?.toLocaleString()} sub="no documents yet" />
           <StatCard label="Total employers" value={counts.total?.toLocaleString()} />
         </div>
       )}
@@ -634,6 +629,7 @@ function EmployerVerifications() {
           {OWNER_PILLS.map((p) => (
             <button key={p.key} className={`pill${stage === p.key ? " active" : ""}`} onClick={() => setStage(p.key)}>
               {p.label}
+              {counts && counts[p.count] != null && <span className="count">{counts[p.count].toLocaleString()}</span>}
             </button>
           ))}
         </div>
@@ -657,20 +653,7 @@ function EmployerVerifications() {
           title="Employer verification"
           onClose={() => setSelected(null)}
           size="lg"
-          footer={
-            <>
-              <button className="btn" onClick={() => setSelected(null)}>Close</button>
-              {canEdit && (
-              <button
-                className={`btn ${selected.isVerified ? "ghost-danger" : "primary"}`}
-                disabled={busy}
-                onClick={() => toggleVerified(selected)}
-              >
-                {busy ? "Working…" : selected.isVerified ? "Remove verified status" : "Mark employer verified ✓"}
-              </button>
-              )}
-            </>
-          }
+          footer={<button className="btn" onClick={() => setSelected(null)}>Close</button>}
         >
           <div className="person-head">
             <div className="avatar-lg">
@@ -689,7 +672,7 @@ function EmployerVerifications() {
               </div>
             </div>
             <div className="right">
-              {selected.isVerified ? <Badge value="verified" color="green" /> : <Badge value="not verified" color="orange" />}
+              {ownerVerified(selected) ? <Badge value="verified" color="green" /> : <Badge value="not verified" color="orange" />}
             </div>
           </div>
           <Timeline
