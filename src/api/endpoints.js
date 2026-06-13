@@ -14,6 +14,14 @@ export const deleteAdminAccount = (id) => client.delete(`/admin/access/admins/${
 // ── Dashboard ────────────────────────────────────────────────────────────────
 export const getAnalytics = (params) => client.get("/admin/UserAnalytics", { params });
 
+// ── Engagement / events analytics ────────────────────────────────────────────
+export const getEventStats = (params) => client.get("/admin/events/stats", { params });
+export const getEventsList = (params) => client.get("/admin/events", { params });
+export const getFunnelNames = () => client.get("/admin/events/funnels");
+export const getFunnel = (params) => client.get("/admin/events/funnel", { params });
+export const getStuckPoints = (params) => client.get("/admin/events/stuck", { params });
+export const getUserTimeline = (params) => client.get("/admin/events/timeline", { params });
+
 // ── Employees (job-seeker users) ─────────────────────────────────────────────
 export const getEmployees = (params) => client.get("/admin/UsersListPaginated", { params });
 export const getUserDetails = (id) => client.get("/admin/userDetails", { params: { id } });
@@ -75,6 +83,16 @@ export const getCouponRedemptions = (id, params) =>
   client.get(`/admin/coupons/${id}/redemptions`, { params });
 export const searchCouponUsers = (params) => client.get("/admin/coupon-helpers/users", { params });
 export const getCouponAssociations = () => client.get("/admin/coupon-helpers/associations");
+
+// ── Notifications (admin-composed push + in-app) ─────────────────────────────
+export const sendAdminNotification = (payload) => client.post("/admin/notifications/send", payload);
+export const getNotificationCampaigns = (params) => client.get("/admin/notifications/campaigns", { params });
+export const searchNotificationUsers = (params) => client.get("/admin/notification-helpers/users", { params });
+
+// Notification templates (DB-managed copy, B2B/B2C variants)
+export const getNotificationTemplates = () => client.get("/admin/notification-templates");
+export const upsertNotificationTemplate = (payload) => client.post("/admin/notification-templates", payload);
+export const deleteNotificationTemplate = (id) => client.delete(`/admin/notification-templates/${id}`);
 
 // ── API logs ─────────────────────────────────────────────────────────────────
 export const getApiLogs = (params) => client.get("/admin/apiLogs", { params });

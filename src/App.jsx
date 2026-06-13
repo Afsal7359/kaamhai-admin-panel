@@ -4,6 +4,7 @@ import Layout from "./components/Layout";
 import ResourcePage from "./components/ResourcePage";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Analytics from "./pages/Analytics";
 import Employees from "./pages/Employees";
 import Employers from "./pages/Employers";
 import JobPosts from "./pages/JobPosts";
@@ -12,6 +13,7 @@ import Verifications from "./pages/Verifications";
 import Payments from "./pages/Payments";
 import PointRewards from "./pages/PointRewards";
 import Coupons from "./pages/Coupons";
+import Notifications from "./pages/Notifications";
 import SupportNumbers from "./pages/SupportNumbers";
 import ApiLogs from "./pages/ApiLogs";
 import AccessManager from "./pages/AccessManager";
@@ -49,6 +51,7 @@ export default function App() {
         }
       >
         <Route index element={<Guard resource="dashboard"><Dashboard /></Guard>} />
+        <Route path="analytics" element={<Guard resource="analytics"><Analytics /></Guard>} />
         <Route path="employees" element={<Guard resource="employees"><Employees /></Guard>} />
         <Route path="employers" element={<Guard resource="employers"><Employers /></Guard>} />
         <Route path="job-posts" element={<Guard resource="job-posts"><JobPosts /></Guard>} />
@@ -57,6 +60,7 @@ export default function App() {
         <Route path="payments" element={<Guard resource="payments"><Payments /></Guard>} />
         <Route path="point-rewards" element={<Guard resource="point-rewards"><PointRewards /></Guard>} />
         <Route path="coupons" element={<Guard resource="coupons"><Coupons /></Guard>} />
+        <Route path="notifications" element={<Guard resource="notifications"><Notifications /></Guard>} />
         <Route path="support-numbers" element={<Guard resource="supportConfig"><SupportNumbers /></Guard>} />
         <Route path="api-logs" element={<Guard resource="api-logs"><ApiLogs /></Guard>} />
         <Route path="access" element={<SuperGuard><AccessManager /></SuperGuard>} />

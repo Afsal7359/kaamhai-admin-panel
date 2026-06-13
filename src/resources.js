@@ -7,7 +7,10 @@ export const GROUPS = [
   {
     group: "Overview",
     icon: "chart",
-    items: [{ page: "/", label: "Dashboard", icon: "📊", end: true }],
+    items: [
+      { page: "/", label: "Dashboard", icon: "📊", end: true },
+      { page: "/analytics", label: "Engagement & Events", icon: "📈" },
+    ],
   },
   {
     group: "People",
@@ -96,6 +99,7 @@ export const GROUPS = [
       { model: "walletTransaction", label: "Wallet Transactions", fields: ["userId", "userType", "eventKey", "amount", "balanceAfter", "status"] },
       { page: "/point-rewards", label: "Point Rewards", icon: "🎁" },
       { page: "/coupons", label: "Coupons", icon: "🏷️" },
+      { page: "/notifications", label: "Notifications", icon: "🔔" },
       { page: "/payments", label: "Payment Tools", icon: "💳" },
     ],
   },
