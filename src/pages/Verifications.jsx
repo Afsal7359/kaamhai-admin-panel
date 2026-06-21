@@ -5,6 +5,7 @@ import {
   getUserVerifications,
   rejectVerification,
   reviewBusinessDocument,
+  setEmployerVerified,
 } from "../api/endpoints";
 import { fileUrl } from "../api/client";
 import Badge from "../components/Badge";
@@ -12,8 +13,19 @@ import DataTable from "../components/DataTable";
 import Modal from "../components/Modal";
 import Pagination from "../components/Pagination";
 import StatCard from "../components/StatCard";
+import MessageComposer, { buildMessage, DEFAULT_APP_URL, SentMessageCard } from "../components/MessageComposer";
 import { useToast } from "../components/Toast";
 import { useAuth } from "../context/AuthContext";
+
+// Initial composer state for a verify/reject action.
+const initComposer = (audience, kind, reason) => ({
+  enabled: true,
+  sendSms: false,
+  url: DEFAULT_APP_URL,
+  text: buildMessage({ audience, kind, reason, url: DEFAULT_APP_URL }),
+});
+const composerPayload = (c) =>
+  c?.enabled ? { sendSms: c.sendSms, message: c.text, appUrl: c.url } : { sendSms: false };
 
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString("en-IN") : "—");
 const fmtDateTime = (d) => (d ? new Date(d).toLocaleString("en-IN") : "—");
@@ -168,8 +180,10 @@ function EmployeeVerifications() {
   const [stage, setStage] = useState("pending");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
+  const [approveComposer, setApproveComposer] = useState(null);
   const [rejecting, setRejecting] = useState(null);
   const [reason, setReason] = useState("");
+  const [rejectComposer, setRejectComposer] = useState(null);
   const [busy, setBusy] = useState(false);
 
   const load = async (p = page, s = stage) => {
@@ -199,9 +213,12 @@ function EmployeeVerifications() {
   const approve = async (u) => {
     setBusy(true);
     try {
-      await approveVerification(u._id);
+      const res = await approveVerification(u._id, composerPayload(approveComposer));
+      const sent = res.data?.data?.verificationMessage;
       toast(`${u.basicDetails?.name || u.phoneNumber} verified ✓`, "success");
-      setSelected(null);
+      // Reflect the sent message immediately in the open detail view.
+      setSelected((s) => (s && s._id === u._id ? { ...s, isEmployeeVerified: true, verificationMessage: sent } : s));
+      setApproveComposer(null);
       load(page);
     } catch (err) {
       toast(err.response?.data?.message || "Approval failed", "error");
@@ -213,11 +230,15 @@ function EmployeeVerifications() {
   const doReject = async () => {
     setBusy(true);
     try {
-      await rejectVerification(rejecting._id, reason);
+      const res = await rejectVerification(rejecting._id, reason, composerPayload(rejectComposer));
+      const sent = res.data?.data?.verificationMessage;
       toast("Verification rejected", "success");
+      setSelected((s) =>
+        s && s._id === rejecting._id ? { ...s, manualVerificationRejectedReason: reason, verificationMessage: sent } : s,
+      );
       setRejecting(null);
       setReason("");
-      setSelected(null);
+      setRejectComposer(null);
       load(page);
     } catch (err) {
       toast(err.response?.data?.message || "Rejection failed", "error");
@@ -304,12 +325,30 @@ function EmployeeVerifications() {
               <button className="btn" onClick={() => setSelected(null)}>Close</button>
               {!selectedVerified && canEdit && (
                 <>
-                  <button className="btn ghost-danger" disabled={busy} onClick={() => setRejecting(selected)}>
+                  <button
+                    className="btn ghost-danger"
+                    disabled={busy}
+                    onClick={() => {
+                      setReason("");
+                      setRejectComposer(initComposer("b2c", "rejected", ""));
+                      setRejecting(selected);
+                    }}
+                  >
                     Reject
                   </button>
-                  <button className="btn primary" disabled={busy} onClick={() => approve(selected)}>
-                    {busy ? "Working…" : "Approve & verify"}
-                  </button>
+                  {approveComposer ? (
+                    <button className="btn primary" disabled={busy} onClick={() => approve(selected)}>
+                      {busy ? "Working…" : approveComposer.enabled ? "Confirm — verify & send" : "Confirm — verify"}
+                    </button>
+                  ) : (
+                    <button
+                      className="btn primary"
+                      disabled={busy}
+                      onClick={() => setApproveComposer(initComposer("b2c", "verified"))}
+                    >
+                      Approve & verify
+                    </button>
+                  )}
                 </>
               )}
             </>
@@ -341,6 +380,22 @@ function EmployeeVerifications() {
             </div>
           </div>
           <Timeline steps={computeUserSteps(selected, true)} />
+
+          {/* Message already sent to this user */}
+          {selected.verificationMessage && <SentMessageCard record={selected.verificationMessage} />}
+
+          {/* Compose the verification-complete message before approving */}
+          {!selectedVerified && canEdit && approveComposer && (
+            <>
+              <div className="form-section-title">Verification message</div>
+              <MessageComposer
+                audience="b2c"
+                kind="verified"
+                value={approveComposer}
+                onChange={setApproveComposer}
+              />
+            </>
+          )}
         </Modal>
       )}
 
@@ -358,15 +413,24 @@ function EmployeeVerifications() {
           }
         >
           <div className="field">
-            <label>Reason (sent to the user as a notification)</label>
+            <label>Reason (shown to the user)</label>
             <textarea
               className="textarea"
-              rows={3}
+              rows={2}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g. Document photo is blurred, please re-upload"
             />
           </div>
+          {rejectComposer && (
+            <MessageComposer
+              audience="b2c"
+              kind="rejected"
+              reason={reason}
+              value={rejectComposer}
+              onChange={setRejectComposer}
+            />
+          )}
         </Modal>
       )}
     </div>
@@ -455,6 +519,8 @@ function EmployerVerifications() {
   const [stage, setStage] = useState("");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
+  const [docReject, setDocReject] = useState(null); // { type, id, reason, composer }
+  const [verifyMsg, setVerifyMsg] = useState(null); // composer for verification-complete msg
   const [busy, setBusy] = useState(false);
 
   const load = async (p = page, s = stage) => {
@@ -485,14 +551,57 @@ function EmployerVerifications() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage]);
 
+  // Approve a document (or revoke). Rejections go through the modal below so a
+  // re-upload message can be composed.
   const reviewDoc = async (type, id, action) => {
+    if (action === "reject") {
+      setDocReject({ type, id, reason: "", composer: initComposer("b2b", "rejected", "") });
+      return;
+    }
     setBusy(true);
     try {
       await reviewBusinessDocument(type, id, action);
-      toast(`Document ${action === "approve" ? "approved" : "rejected"}`, "success");
+      toast(`Document ${action === "approve" ? "approved" : "updated"}`, "success");
       load(page);
     } catch (err) {
       toast(err.response?.data?.message || "Action failed", "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submitDocReject = async () => {
+    setBusy(true);
+    try {
+      await reviewBusinessDocument(
+        docReject.type,
+        docReject.id,
+        "reject",
+        docReject.reason,
+        composerPayload(docReject.composer),
+      );
+      toast("Document rejected — re-upload request sent", "success");
+      setDocReject(null);
+      load(page);
+    } catch (err) {
+      toast(err.response?.data?.message || "Action failed", "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Send the "verification complete" message (also flips the isVerified flag).
+  const sendVerifiedMessage = async () => {
+    setBusy(true);
+    try {
+      const res = await setEmployerVerified(selected._id, true, composerPayload(verifyMsg));
+      const sent = res.data?.data?.verificationMessage;
+      toast("Verification message sent ✓", "success");
+      setSelected((s) => (s ? { ...s, isVerified: true, verificationMessage: sent } : s));
+      setVerifyMsg(null);
+      load(page);
+    } catch (err) {
+      toast(err.response?.data?.message || "Failed to send", "error");
     } finally {
       setBusy(false);
     }
@@ -651,9 +760,28 @@ function EmployerVerifications() {
       {selected && (
         <Modal
           title="Employer verification"
-          onClose={() => setSelected(null)}
+          onClose={() => { setSelected(null); setVerifyMsg(null); }}
           size="lg"
-          footer={<button className="btn" onClick={() => setSelected(null)}>Close</button>}
+          footer={
+            <>
+              <button className="btn" onClick={() => { setSelected(null); setVerifyMsg(null); }}>Close</button>
+              {canEdit && ownerVerified(selected) && (
+                verifyMsg ? (
+                  <button className="btn primary" disabled={busy} onClick={sendVerifiedMessage}>
+                    {busy ? "Sending…" : verifyMsg.enabled ? "Send message" : "Mark verified"}
+                  </button>
+                ) : (
+                  <button
+                    className="btn primary"
+                    disabled={busy}
+                    onClick={() => setVerifyMsg(initComposer("b2b", "verified"))}
+                  >
+                    Send “verification complete” message
+                  </button>
+                )
+              )}
+            </>
+          }
         >
           <div className="person-head">
             <div className="avatar-lg">
@@ -679,6 +807,48 @@ function EmployerVerifications() {
             steps={computeOwnerSteps(selected).map((s) =>
               s.key === "docs" ? { ...s, content: docsBlock(selected) } : s,
             )}
+          />
+
+          {selected.verificationMessage && <SentMessageCard record={selected.verificationMessage} />}
+
+          {canEdit && ownerVerified(selected) && verifyMsg && (
+            <>
+              <div className="form-section-title">Verification-complete message</div>
+              <MessageComposer audience="b2b" kind="verified" value={verifyMsg} onChange={setVerifyMsg} />
+            </>
+          )}
+        </Modal>
+      )}
+
+      {docReject && (
+        <Modal
+          title="Reject document & request re-upload"
+          onClose={() => setDocReject(null)}
+          footer={
+            <>
+              <button className="btn" onClick={() => setDocReject(null)}>Cancel</button>
+              <button className="btn danger" onClick={submitDocReject} disabled={busy}>
+                {busy ? "Rejecting…" : "Reject & notify"}
+              </button>
+            </>
+          }
+        >
+          <div className="field">
+            <label>Reason (shown to the employer)</label>
+            <textarea
+              className="textarea"
+              rows={2}
+              value={docReject.reason}
+              onChange={(e) => setDocReject({ ...docReject, reason: e.target.value })}
+              placeholder="e.g. GST certificate is unclear, please re-upload"
+            />
+          </div>
+          <MessageComposer
+            audience="b2b"
+            kind="rejected"
+            reason={docReject.reason}
+            value={docReject.composer}
+            onChange={(composer) => setDocReject((d) => ({ ...d, composer }))}
           />
         </Modal>
       )}

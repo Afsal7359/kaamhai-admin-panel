@@ -28,9 +28,17 @@ export const getUserDetails = (id) => client.get("/admin/userDetails", { params:
 export const updateBasicDetails = (payload) => client.post("/admin/updateBasicDetails", payload);
 export const updateWorkPreference = (payload) => client.post("/admin/workPreferenceDetails", payload);
 
+export const getEmployeeFull = (id) => client.get(`/admin/employee/${id}/full`);
+export const terminateEmployee = (payload) => client.post("/admin/employee/terminate", payload);
+
 // ── Employers (business owners) ──────────────────────────────────────────────
 export const getEmployers = (params) =>
   client.get("/admin/businessOwnerListPaginated", { params });
+export const getEmployerFull = (id) => client.get(`/admin/employer/${id}/full`);
+export const getCompanyFull = (id) => client.get(`/admin/company/${id}/full`);
+export const getBranchFull = (id) => client.get(`/admin/branch/${id}/full`);
+export const getCompaniesList = (params) => client.get("/admin/companies-list", { params });
+export const getBranchesList = (params) => client.get("/admin/branches-list", { params });
 
 // ── Job posts ────────────────────────────────────────────────────────────────
 export const getJobPosts = (params) => client.get("/admin/jobPostList", { params });
@@ -50,17 +58,18 @@ export const getUserVerifications = (params) =>
   client.get("/admin/verification/users", { params });
 export const getEmployerVerifications = (params) =>
   client.get("/admin/verification/employers", { params });
-export const setEmployerVerified = (id, isVerified) =>
-  client.post(`/admin/verification/employer/${id}/status`, { isVerified });
-export const reviewBusinessDocument = (type, id, action, remarks) =>
-  client.patch(`/admin/verification/document/${type}/${id}`, { action, remarks });
+export const setEmployerVerified = (id, isVerified, msg = {}) =>
+  client.post(`/admin/verification/employer/${id}/status`, { isVerified, ...msg });
+export const reviewBusinessDocument = (type, id, action, remarks, msg = {}) =>
+  client.patch(`/admin/verification/document/${type}/${id}`, { action, remarks, ...msg });
 
 // ── Verifications ────────────────────────────────────────────────────────────
 export const getPendingVerifications = (params) =>
   client.get("/admin/pendingVerifications", { params });
-export const approveVerification = (userId) => client.post("/admin/verify-user", { userId });
-export const rejectVerification = (userId, reason) =>
-  client.post("/admin/reject-verification", { userId, reason });
+export const approveVerification = (userId, msg = {}) =>
+  client.post("/admin/verify-user", { userId, ...msg });
+export const rejectVerification = (userId, reason, msg = {}) =>
+  client.post("/admin/reject-verification", { userId, reason, ...msg });
 
 export const getEmployerDocuments = (params) =>
   client.get("/admin/employer-documents", { params });

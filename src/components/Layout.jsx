@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { GROUPS, resourceFor, resourceKey } from "../resources";
 import ErrorBoundary from "./ErrorBoundary";
 import Icon from "./Icon";
+import InstallButton from "./InstallButton";
 
 const itemPath = (it) => (it.page ? it.page : `/r/${it.model}`);
 
@@ -11,6 +12,20 @@ export default function Layout() {
   const { admin, logout, can, isSuperAdmin } = useAuth();
   const { pathname } = useLocation();
   const [query, setQuery] = useState("");
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close the mobile drawer whenever the route changes.
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Lock body scroll while the drawer is open on mobile.
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
 
   // Only show pages this admin can view.
   const allowedGroups = useMemo(
@@ -59,9 +74,12 @@ export default function Layout() {
   }, [pathname]);
 
   const initials = (admin?.name || "A").trim().charAt(0).toUpperCase();
+  const roleLabel = isSuperAdmin ? "Super admin" : "Admin";
 
   return (
-    <div className="shell">
+    <div className={`shell${mobileOpen ? " drawer-open" : ""}`}>
+      {/* Backdrop for the mobile drawer */}
+      <div className="drawer-backdrop" onClick={() => setMobileOpen(false)} />
       <aside className="sidebar lux">
         <div className="lux-brand">
           <div className="lux-mark">K</div>
@@ -121,11 +139,15 @@ export default function Layout() {
           )}
         </nav>
 
+        <div className="lux-install">
+          <InstallButton className="lux-install-btn" label="Install app" />
+        </div>
+
         <div className="lux-foot">
           <div className="lux-ava">{initials}</div>
           <div className="lux-foot-who">
             <div className="lux-foot-name">{admin?.name || "Admin"}</div>
-            <div className="lux-foot-role">Super admin</div>
+            <div className="lux-foot-role">{roleLabel}</div>
           </div>
           <button className="lux-logout" onClick={logout} title="Logout">
             <Icon name="logout" size={16} />
@@ -135,6 +157,13 @@ export default function Layout() {
 
       <div className="main">
         <header className="topbar">
+          <button
+            className="hamburger"
+            onClick={() => setMobileOpen((v) => !v)}
+            aria-label="Toggle menu"
+          >
+            <span /><span /><span />
+          </button>
           <h1>{title}</h1>
           <div className="topbar-right">
             <span className="topbar-date">

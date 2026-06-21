@@ -32,8 +32,8 @@ export const GROUPS = [
     group: "Companies & Branches",
     icon: "building",
     items: [
-      { model: "companiess", label: "Companies", fields: ["companyName", "companyRole", "isDeleted", "createdAt"] },
-      { model: "Branch", label: "Branches", fields: ["branchCode", "branchName", "branchType", "location.city", "isActive", "isDeleted"] },
+      { page: "/companies", label: "Companies", icon: "🏢", resource: "companiess" },
+      { page: "/branches", label: "Branches", icon: "🏬", resource: "Branch" },
       { model: "selectedBranch", label: "Selected Branches", fields: ["userId", "companyId", "branchId", "createdAt"] },
       { model: "gst", label: "GST Records", fields: ["GSTIN", "legal_name_of_business", "state", "isLinked", "userId"] },
       { model: "fssai", label: "FSSAI Records", fields: ["fssai", "entity", "status", "state", "isLinked"] },

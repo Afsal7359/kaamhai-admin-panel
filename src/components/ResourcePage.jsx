@@ -17,7 +17,19 @@ import JsonEditor from "./JsonEditor";
 import Modal from "./Modal";
 import Pagination from "./Pagination";
 import RecordForm, { buildInitial, toPayload } from "./RecordForm";
+import EmployeeDetail from "./EmployeeDetail";
+import EmployerDetail from "./EmployerDetail";
+import CompanyDetail from "./CompanyDetail";
 import { useToast } from "./Toast";
+
+// Models that get a rich, purpose-built detail view instead of the generic DocView.
+const RICH_VIEW = {
+  user: (doc, onClose, onChanged) => (
+    <EmployeeDetail employeeId={doc._id} onClose={onClose} onChanged={onChanged} />
+  ),
+  businessOwner: (doc, onClose) => <EmployerDetail employerId={doc._id} onClose={onClose} />,
+  companiess: (doc, onClose) => <CompanyDetail companyId={doc._id} onClose={onClose} />,
+};
 
 const get = (obj, path) => path.split(".").reduce((o, k) => (o == null ? o : o[k]), obj);
 
@@ -237,31 +249,34 @@ export default function ResourcePage() {
         <Pagination page={page} totalPages={totalPages} total={total} onChange={load} />
       </div>
 
-      {viewing && (
-        <Modal
-          title={`${title} — details`}
-          onClose={() => setViewing(null)}
-          size="lg"
-          footer={
-            <>
-              <button className="btn" onClick={() => setViewing(null)}>Close</button>
-              {can(model, "edit") && (
-                <button
-                  className="btn primary"
-                  onClick={() => {
-                    openEdit(viewing);
-                    setViewing(null);
-                  }}
-                >
-                  Edit
-                </button>
-              )}
-            </>
-          }
-        >
-          <DocView doc={viewing} />
-        </Modal>
-      )}
+      {viewing &&
+        (RICH_VIEW[model] ? (
+          RICH_VIEW[model](viewing, () => setViewing(null), () => load(page))
+        ) : (
+          <Modal
+            title={`${title} — details`}
+            onClose={() => setViewing(null)}
+            size="lg"
+            footer={
+              <>
+                <button className="btn" onClick={() => setViewing(null)}>Close</button>
+                {can(model, "edit") && (
+                  <button
+                    className="btn primary"
+                    onClick={() => {
+                      openEdit(viewing);
+                      setViewing(null);
+                    }}
+                  >
+                    Edit
+                  </button>
+                )}
+              </>
+            }
+          >
+            <DocView doc={viewing} />
+          </Modal>
+        ))}
 
       {form && (
         <Modal

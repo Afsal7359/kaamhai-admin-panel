@@ -7,6 +7,8 @@ import Dashboard from "./pages/Dashboard";
 import Analytics from "./pages/Analytics";
 import Employees from "./pages/Employees";
 import Employers from "./pages/Employers";
+import Companies from "./pages/Companies";
+import Branches from "./pages/Branches";
 import JobPosts from "./pages/JobPosts";
 import OfferLetters from "./pages/OfferLetters";
 import Verifications from "./pages/Verifications";
@@ -54,6 +56,8 @@ export default function App() {
         <Route path="analytics" element={<Guard resource="analytics"><Analytics /></Guard>} />
         <Route path="employees" element={<Guard resource="employees"><Employees /></Guard>} />
         <Route path="employers" element={<Guard resource="employers"><Employers /></Guard>} />
+        <Route path="companies" element={<Guard resource="companiess"><Companies /></Guard>} />
+        <Route path="branches" element={<Guard resource="Branch"><Branches /></Guard>} />
         <Route path="job-posts" element={<Guard resource="job-posts"><JobPosts /></Guard>} />
         <Route path="offer-letters" element={<Guard resource="offer-letters"><OfferLetters /></Guard>} />
         <Route path="verifications" element={<Guard resource="verifications"><Verifications /></Guard>} />

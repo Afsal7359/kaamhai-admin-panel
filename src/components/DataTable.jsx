@@ -30,7 +30,13 @@ export default function DataTable({ columns, rows, loading, emptyText = "No reco
                 style={onRowClick ? { cursor: "pointer" } : undefined}
               >
                 {columns.map((c) => (
-                  <td key={c.key || c.label}>{c.render ? c.render(row) : row[c.key] ?? "—"}</td>
+                  <td
+                    key={c.key || c.label}
+                    data-label={c.label}
+                    className={c.key === "__actions" || c.key === "actions" ? "row-actions-cell" : undefined}
+                  >
+                    {c.render ? c.render(row) : row[c.key] ?? "—"}
+                  </td>
                 ))}
               </tr>
             ))
