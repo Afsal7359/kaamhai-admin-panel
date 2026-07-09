@@ -23,6 +23,13 @@ export const fileUrl = (value) => {
   return `${API_URL}/admin/file?name=${encodeURIComponent(value)}&token=${encodeURIComponent(token)}`;
 };
 
+// A user's profile photo can be stored as `profile.fileName` (schema) OR as a
+// bare string on `profile` (some app write paths). Resolve either shape → URL.
+export const profilePhotoUrl = (profile) => {
+  const raw = typeof profile === "string" ? profile : profile?.fileName;
+  return fileUrl(raw);
+};
+
 // HMAC-SHA256 via Web Crypto — mirrors appbackend/middlewares/signatureCheck.js
 async function hmacSha256Hex(secret, message) {
   const enc = new TextEncoder();

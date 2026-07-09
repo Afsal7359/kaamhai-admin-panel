@@ -13,6 +13,8 @@ export const deleteAdminAccount = (id) => client.delete(`/admin/access/admins/${
 
 // ── Dashboard ────────────────────────────────────────────────────────────────
 export const getAnalytics = (params) => client.get("/admin/UserAnalytics", { params });
+export const getDashboardSummary = (params) => client.get("/admin/dashboard/summary", { params });
+export const getStatsOverview = () => client.get("/admin/stats/overview");
 
 // ── Engagement / events analytics ────────────────────────────────────────────
 export const getEventStats = (params) => client.get("/admin/events/stats", { params });
@@ -30,12 +32,20 @@ export const updateWorkPreference = (payload) => client.post("/admin/workPrefere
 
 export const getEmployeeFull = (id) => client.get(`/admin/employee/${id}/full`);
 export const terminateEmployee = (payload) => client.post("/admin/employee/terminate", payload);
+export const updateEmployeePhoto = (id, formData) =>
+  client.post(`/admin/employee/${id}/photo`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
 
 // ── Employers (business owners) ──────────────────────────────────────────────
 export const getEmployers = (params) =>
   client.get("/admin/businessOwnerListPaginated", { params });
 export const getEmployerFull = (id) => client.get(`/admin/employer/${id}/full`);
 export const getCompanyFull = (id) => client.get(`/admin/company/${id}/full`);
+export const updateCompanyProfile = (id, formData) =>
+  client.post(`/admin/company/${id}/profile`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
 export const getBranchFull = (id) => client.get(`/admin/branch/${id}/full`);
 export const getCompaniesList = (params) => client.get("/admin/companies-list", { params });
 export const getBranchesList = (params) => client.get("/admin/branches-list", { params });
@@ -49,6 +59,8 @@ export const createPaymentLink = (payload) => client.post("/admin/jobPostPayment
 
 // ── Offer letters ────────────────────────────────────────────────────────────
 export const getOfferLetters = (params) => client.get("/admin/getOfferLetter", { params });
+export const acceptOfferLetter = (id) => client.post(`/admin/offer-letter/${id}/accept`);
+export const rejectOfferLetter = (id) => client.post(`/admin/offer-letter/${id}/reject`);
 
 // ── Payments ─────────────────────────────────────────────────────────────────
 export const findPaymentDetails = (payload) => client.post("/admin/paymentDetailsFind", payload);
@@ -62,6 +74,18 @@ export const setEmployerVerified = (id, isVerified, msg = {}) =>
   client.post(`/admin/verification/employer/${id}/status`, { isVerified, ...msg });
 export const reviewBusinessDocument = (type, id, action, remarks, msg = {}) =>
   client.patch(`/admin/verification/document/${type}/${id}`, { action, remarks, ...msg });
+
+// ── Verification provider config (choose IDfy / Cashfree per check) ──────────
+export const getVerificationProviders = () =>
+  client.get("/admin/verification-providers");
+export const updateVerificationProviders = (payload) =>
+  client.put("/admin/verification-providers", payload);
+
+// ── Industries master (B2B industry + sub-categories) ────────────────────────
+export const getIndustries = () => client.get("/admin/industries");
+export const createIndustry = (payload) => client.post("/admin/industries", payload);
+export const updateIndustry = (id, payload) => client.patch(`/admin/industries/${id}`, payload);
+export const deleteIndustry = (id) => client.delete(`/admin/industries/${id}`);
 
 // ── Verifications ────────────────────────────────────────────────────────────
 export const getPendingVerifications = (params) =>

@@ -89,7 +89,7 @@ export default function Companies() {
         <Pagination page={page} totalPages={totalPages} total={total} onChange={load} />
       </div>
 
-      {open && <CompanyDetail companyId={open} onClose={() => setOpen(null)} />}
+      {open && <CompanyDetail companyId={open} onClose={() => setOpen(null)} onChanged={() => load(page)} />}
     </div>
   );
 }

@@ -67,7 +67,7 @@ if (!self.define) {
     });
   };
 }
-define(['./workbox-290dd570'], (function (workbox) { 'use strict';
+define(['./workbox-7e5eb42b'], (function (workbox) { 'use strict';
 
   self.skipWaiting();
   workbox.clientsClaim();
@@ -78,22 +78,12 @@ define(['./workbox-290dd570'], (function (workbox) { 'use strict';
    */
   workbox.precacheAndRoute([{
     "url": "index.html",
-    "revision": "0.g98j2858bv8"
+    "revision": "0.38gpvbu4koo"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("index.html"), {
     allowlist: [/^\/$/],
     denylist: [/^\/admin\//]
   }));
-  workbox.registerRoute(({
-    url
-  }) => url.pathname.startsWith("/admin/"), new workbox.NetworkFirst({
-    "cacheName": "kh-admin-api",
-    "networkTimeoutSeconds": 10,
-    plugins: [new workbox.ExpirationPlugin({
-      maxEntries: 200,
-      maxAgeSeconds: 86400
-    })]
-  }), 'GET');
 
 }));

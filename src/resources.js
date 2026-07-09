@@ -9,6 +9,7 @@ export const GROUPS = [
     icon: "chart",
     items: [
       { page: "/", label: "Dashboard", icon: "📊", end: true },
+      { page: "/statistics", label: "Statistics & Counts", icon: "📉", resource: "dashboard" },
       { page: "/analytics", label: "Engagement & Events", icon: "📈" },
     ],
   },
@@ -98,6 +99,7 @@ export const GROUPS = [
       { model: "platformPrice", label: "Platform Prices", fields: ["jobPostFee", "hiringFee", "gst", "jobSearchUnlockedPrice"] },
       { model: "walletTransaction", label: "Wallet Transactions", fields: ["userId", "userType", "eventKey", "amount", "balanceAfter", "status"] },
       { page: "/point-rewards", label: "Point Rewards", icon: "🎁" },
+      { page: "/industries", label: "Industries", icon: "🏭" },
       { page: "/coupons", label: "Coupons", icon: "🏷️" },
       { page: "/notifications", label: "Notifications", icon: "🔔" },
       { page: "/payments", label: "Payment Tools", icon: "💳" },

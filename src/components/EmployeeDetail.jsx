@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { getEmployeeFull, terminateEmployee, updateDocument } from "../api/endpoints";
-import { fileUrl } from "../api/client";
+import { useEffect, useRef, useState } from "react";
+import { getEmployeeFull, terminateEmployee, updateDocument, updateEmployeePhoto } from "../api/endpoints";
+import { fileUrl, profilePhotoUrl } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import Badge from "./Badge";
 import Modal from "./Modal";
@@ -81,6 +81,10 @@ export default function EmployeeDetail({ employeeId, onClose, onChanged }) {
   const [edit, setEdit] = useState({});
   const [term, setTerm] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoUrlInput, setPhotoUrlInput] = useState("");
+  const [showPhotoLink, setShowPhotoLink] = useState(false);
+  const fileRef = useRef(null);
 
   const load = async () => {
     setLoading(true);
@@ -122,6 +126,46 @@ export default function EmployeeDetail({ employeeId, onClose, onChanged }) {
     } finally {
       setBusy(false);
     }
+  };
+
+  const savePhoto = async (formData, successMsg) => {
+    setPhotoBusy(true);
+    try {
+      await updateEmployeePhoto(employeeId, formData);
+      toast(successMsg, "success");
+      setShowPhotoLink(false);
+      setPhotoUrlInput("");
+      load();
+      onChanged?.();
+    } catch (err) {
+      toast(err.response?.data?.message || "Photo update failed", "error");
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
+
+  const onPickFile = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-picking the same file
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast("Please choose an image file", "error");
+      return;
+    }
+    const fd = new FormData();
+    fd.append("photo", file);
+    savePhoto(fd, "Profile photo updated");
+  };
+
+  const savePhotoLink = () => {
+    const url = photoUrlInput.trim();
+    if (!/^https?:\/\//i.test(url)) {
+      toast("Enter a valid image URL (http/https)", "error");
+      return;
+    }
+    const fd = new FormData();
+    fd.append("photoUrl", url);
+    savePhoto(fd, "Profile photo updated");
   };
 
   const doTerminate = async () => {
@@ -186,9 +230,21 @@ export default function EmployeeDetail({ employeeId, onClose, onChanged }) {
       ) : (
         <>
           <div className="person-head">
-            <div className="avatar-lg">
-              {img(u.profile?.fileName) ? <img src={img(u.profile.fileName)} alt="" /> : name.charAt(0).toUpperCase()}
+            <div
+              className={`avatar-lg${canEdit ? " avatar-editable" : ""}`}
+              onClick={canEdit && !photoBusy ? () => fileRef.current?.click() : undefined}
+              title={canEdit ? "Upload profile photo" : undefined}
+            >
+              {profilePhotoUrl(u.profile) ? (
+                <img src={profilePhotoUrl(u.profile)} alt="" />
+              ) : (
+                name.charAt(0).toUpperCase()
+              )}
+              {canEdit && (
+                <span className="avatar-cam">{photoBusy ? "…" : "📷"}</span>
+              )}
             </div>
+            <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPickFile} />
             <div className="who">
               <div className="nm">{name}</div>
               <div className="ph">
@@ -203,6 +259,31 @@ export default function EmployeeDetail({ employeeId, onClose, onChanged }) {
                 {u.isDeleted && <Badge value="deleted" color="red" />}
                 {u.jobSearchLocked && <Badge value="search locked" color="orange" />}
               </div>
+              {canEdit && (
+                <div className="photo-actions">
+                  <button className="link-btn" onClick={() => fileRef.current?.click()} disabled={photoBusy}>
+                    {profilePhotoUrl(u.profile) ? "Change photo" : "Upload photo"}
+                  </button>
+                  <span className="sep">·</span>
+                  <button className="link-btn" onClick={() => setShowPhotoLink((v) => !v)} disabled={photoBusy}>
+                    Use image link
+                  </button>
+                </div>
+              )}
+              {showPhotoLink && (
+                <div className="photo-link-row">
+                  <input
+                    className="input"
+                    placeholder="https://…/photo.jpg"
+                    value={photoUrlInput}
+                    onChange={(e) => setPhotoUrlInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && savePhotoLink()}
+                  />
+                  <button className="btn sm primary" onClick={savePhotoLink} disabled={photoBusy}>
+                    {photoBusy ? "Saving…" : "Save"}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 

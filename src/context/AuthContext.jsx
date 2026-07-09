@@ -63,10 +63,12 @@ export function AuthProvider({ children }) {
   };
 
   const value = useMemo(() => {
-    const isSuper = !access || access.role === "superadmin";
+    // Default-DENY: only a confirmed superadmin role grants blanket access.
+    // Missing/null/tampered access data must never be treated as elevated.
+    const isSuper = access?.role === "superadmin";
     const can = (resource, action = "view") => {
       if (isSuper) return true;
-      const entry = (access.permissions || []).find((p) => p.resource === resource);
+      const entry = (access?.permissions || []).find((p) => p.resource === resource);
       return Boolean(entry && entry.actions?.includes(action));
     };
     return {

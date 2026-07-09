@@ -8,6 +8,7 @@ import {
   updateDocument,
 } from "../api/endpoints";
 import { resourceFor } from "../resources";
+import { profilePhotoUrl } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import AccessDenied from "./AccessDenied";
 import Badge from "./Badge";
@@ -147,7 +148,24 @@ export default function ResourcePage() {
     });
   };
 
+  // Employees get a leading profile-photo avatar column.
+  const photoCol =
+    model === "user"
+      ? [
+          {
+            key: "__photo",
+            label: "",
+            render: (r) => {
+              const url = profilePhotoUrl(r.profile);
+              const initial = (r.basicDetails?.name || "?").charAt(0).toUpperCase();
+              return <span className="list-ava">{url ? <img src={url} alt="" /> : initial}</span>;
+            },
+          },
+        ]
+      : [];
+
   const columns = [
+    ...photoCol,
     ...fieldPaths.map((p) => ({
       key: p,
       label: labelFor(p),

@@ -4,6 +4,7 @@ import { fileUrl } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import Badge from "./Badge";
 import Modal from "./Modal";
+import CompanyDetail from "./CompanyDetail";
 import { buildPayload, EditSection, initEdit, ViewSection } from "./EditableSection";
 import { useToast } from "./Toast";
 
@@ -36,7 +37,7 @@ function DocRow({ kind, code, name, status }) {
   );
 }
 
-function CompanyCard({ c }) {
+function CompanyCard({ c, onOpen }) {
   const docCount = (c.gst?.length || 0) + (c.fssai?.length || 0) + (c.otherDocument?.length || 0);
   return (
     <div className="company-block">
@@ -44,13 +45,16 @@ function CompanyCard({ c }) {
         <div className="company-logo">
           {img(c.companyLogo) ? <img src={img(c.companyLogo)} alt="" /> : (c.companyName || "C").charAt(0).toUpperCase()}
         </div>
-        <div>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div className="company-name">{c.companyName || "Unnamed company"}</div>
           <div className="company-sub">
             {c.companyRole || "—"} · {docCount} document{docCount === 1 ? "" : "s"}
             {c.isDeleted ? " · deleted" : ""}
           </div>
         </div>
+        {onOpen && (
+          <button className="btn sm" onClick={() => onOpen(c._id)}>Open profile</button>
+        )}
       </div>
       {docCount === 0 ? (
         <div className="tl-desc">No documents on this company.</div>
@@ -89,6 +93,7 @@ export default function EmployerDetail({ employerId, onClose, onChanged }) {
   const [editing, setEditing] = useState(false);
   const [edit, setEdit] = useState({});
   const [busy, setBusy] = useState(false);
+  const [openCompany, setOpenCompany] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -213,7 +218,7 @@ export default function EmployerDetail({ employerId, onClose, onChanged }) {
               {/* Companies & docs */}
               <div className="form-section-title">Companies & documents</div>
               {data.companies.length ? (
-                data.companies.map((c) => <CompanyCard key={c._id} c={c} />)
+                data.companies.map((c) => <CompanyCard key={c._id} c={c} onOpen={setOpenCompany} />)
               ) : (
                 <div className="tl-desc">No companies registered.</div>
               )}
@@ -254,6 +259,13 @@ export default function EmployerDetail({ employerId, onClose, onChanged }) {
             </>
           )}
         </>
+      )}
+      {openCompany && (
+        <CompanyDetail
+          companyId={openCompany}
+          onClose={() => setOpenCompany(null)}
+          onChanged={() => { load(); onChanged?.(); }}
+        />
       )}
     </Modal>
   );

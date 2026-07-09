@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   approveVerification,
   getEmployerVerifications,
@@ -16,6 +17,7 @@ import StatCard from "../components/StatCard";
 import MessageComposer, { buildMessage, DEFAULT_APP_URL, SentMessageCard } from "../components/MessageComposer";
 import { useToast } from "../components/Toast";
 import { useAuth } from "../context/AuthContext";
+import VerificationProvidersPanel from "../components/VerificationProvidersPanel";
 
 // Initial composer state for a verify/reject action.
 const initComposer = (audience, kind, reason) => ({
@@ -85,12 +87,21 @@ function Timeline({ steps }) {
 
 // ── B2C: employee verification flow ─────────────────────────────────────────
 
+// Secondary document type → display label (new IDfy verification flow).
+const SECONDARY_DOC_LABEL = {
+  pan: "PAN", voter: "Voter ID", passport: "Passport", driving_license: "Driving License",
+};
+
 const userIdMethod = (u) => {
-  if (u.verificationMode === "PRIMARY" || u.isPrimaryVerified) return "DigiLocker (Aadhaar)";
-  if (u.isAadharOtpVerfied) return "Aadhaar OTP";
-  if (u.isAadharphotoVerified || u.isDocumentVerified) return "Aadhaar photo";
+  // New flow: Aadhaar photo (IDfy OCR) + a secondary ID proof.
+  if (u.isAadharphotoVerified || u.aadharId) {
+    const sec = SECONDARY_DOC_LABEL[u.secondaryDocType];
+    if (u.isDocumentVerified && sec) return `Aadhaar + ${sec}`;
+    return "Aadhaar photo";
+  }
+  if (u.verificationMode === "PRIMARY" || u.isPrimaryVerified) return "DigiLocker (Aadhaar)"; // legacy
+  if (u.isAadharOtpVerfied) return "Aadhaar OTP"; // legacy
   if (u.manualVerificationDocFront) return "Manual documents";
-  if (u.aadharId) return "Aadhaar";
   return null;
 };
 
@@ -167,7 +178,7 @@ const USER_PILLS = [
   { key: "", label: "All users" },
 ];
 
-function EmployeeVerifications() {
+function EmployeeVerifications({ initialStage }) {
   const toast = useToast();
   const { can } = useAuth();
   const canEdit = can("verifications", "edit");
@@ -177,7 +188,7 @@ function EmployeeVerifications() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const [stage, setStage] = useState("pending");
+  const [stage, setStage] = useState(initialStage || "pending");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
   const [approveComposer, setApproveComposer] = useState(null);
@@ -506,7 +517,7 @@ const OWNER_PILLS = [
   { key: "verified", label: "Fully verified", count: "verified" },
 ];
 
-function EmployerVerifications() {
+function EmployerVerifications({ initialStage }) {
   const toast = useToast();
   const { can } = useAuth();
   const canEdit = can("verifications", "edit");
@@ -516,7 +527,7 @@ function EmployerVerifications() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const [stage, setStage] = useState("");
+  const [stage, setStage] = useState(initialStage || "");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
   const [docReject, setDocReject] = useState(null); // { type, id, reason, composer }
@@ -859,9 +870,15 @@ function EmployerVerifications() {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Verifications() {
-  const [tab, setTab] = useState("b2c");
+  const [params] = useSearchParams();
+  const [tab, setTab] = useState(params.get("tab") === "b2b" ? "b2b" : "b2c");
+  // Deep-link stage (from the dashboard) applies to whichever tab is first shown.
+  const initialStage = params.get("stage") || undefined;
   return (
     <div>
+      {/* Choose IDfy / Cashfree per verification check. */}
+      <VerificationProvidersPanel />
+
       <div className="tabs">
         <button className={`tab${tab === "b2c" ? " active" : ""}`} onClick={() => setTab("b2c")}>
           B2C — Employee verification
@@ -870,7 +887,9 @@ export default function Verifications() {
           B2B — Employer verification
         </button>
       </div>
-      {tab === "b2c" ? <EmployeeVerifications /> : <EmployerVerifications />}
+      {tab === "b2c"
+        ? <EmployeeVerifications initialStage={tab === "b2c" ? initialStage : undefined} />
+        : <EmployerVerifications initialStage={tab === "b2b" ? initialStage : undefined} />}
     </div>
   );
 }

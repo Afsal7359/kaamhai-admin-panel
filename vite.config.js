@@ -26,20 +26,11 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // App shell precache. API calls are network-first so data stays fresh.
+        // Precache the app shell only. API calls (cross-origin /admin/*) are
+        // NOT handled by the SW — they always go straight to the network, so
+        // admin data is never stale or served from cache.
         globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
         navigateFallbackDenylist: [/^\/admin\//],
-        runtimeCaching: [
-          {
-            urlPattern: ({ url }) => url.pathname.startsWith("/admin/"),
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "kh-admin-api",
-              networkTimeoutSeconds: 10,
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 },
-            },
-          },
-        ],
       },
       // Enable the service worker in `npm run dev` too, so the install prompt
       // works while developing (Chrome needs an active SW to offer install).
